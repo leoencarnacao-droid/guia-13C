@@ -14,7 +14,7 @@ jobs:
       - name: Levantar la App con Docker Compose
         run: |
           docker compose up -d --build
-          echo "Esperando a que la Notes App levante en el puerto 8080..."
+          echo "Esperando a que la Notes App levante..."
           for i in {1..30}; do
             if curl -s http://localhost:8080 > /dev/null; then
               echo "¡App lista!"
@@ -29,9 +29,9 @@ jobs:
           mkdir -p reports
           chmod -R 777 reports
           
-          # ESTE ES EL COMANDO EXACTO DEL SPRINT 4 DEL TP
+          # Usamos --user root para evitar el error de permisos del zap.yaml
           # Usamos -P 8090 para que el proxy de ZAP no choque con el 8080 de la app
-          docker run --rm --network host -v $(pwd):/zap/wrk/:rw \
+          docker run --rm --network host --user root -v $(pwd):/zap/wrk/:rw \
             -t ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd -autorun /zap/wrk/zap.yaml -P 8090
 
