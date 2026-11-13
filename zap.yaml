@@ -29,4 +29,3 @@ jobs:
       template: modern
       reportDir: /zap/wrk/reports
       reportFile: zap-report
-      reportTitle: "Notes App - Security Scan Report"

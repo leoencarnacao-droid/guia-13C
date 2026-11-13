@@ -17,10 +17,9 @@ jobs:
           echo "Esperando a que la Notes App levante..."
           for i in {1..30}; do
             if curl -s http://localhost:8080 > /dev/null; then
-              echo "¡App lista para escanear!"
+              echo "¡App lista!"
               exit 0
             fi
-            echo "Esperando... ($i/30)"
             sleep 2
           done
           exit 1
@@ -29,16 +28,15 @@ jobs:
         run: |
           mkdir -p reports
           chmod -R 777 reports
-          # Este es el comando exacto del TP13C (Sprint 4)
-          # Usamos -P 8090 para el proxy interno de ZAP y no chocar con el 8080 de la app
+          
+          # Flag -P 8090: ZAP usa el 8090 para su proxy, pero escanea el 8080
           docker run --rm --network host -v $(pwd):/zap/wrk/:rw \
             -t ghcr.io/zaproxy/zaproxy:stable \
             zap.sh -cmd -autorun /zap/wrk/zap.yaml -P 8090
 
-      - name: Subir Reporte de Vulnerabilidades
+      - name: Subir Reporte
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-security-report
           path: reports/
-          retention-days: 7
