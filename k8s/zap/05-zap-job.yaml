@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zap-reports-pvc
+  namespace: flask-app
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zap-plan
+  namespace: flask-app
+data:
+  zap-plan.yml: |
+    env:
+      contexts:
+        - name: notes-app-context
+          urls:
+            - "http://frontend-svc"
+          includePaths:
+            - "http://frontend-svc/.*"
+    jobs:
+      - type: spider
+        parameters:
+          context: notes-app-context
+          maxDuration: 2
+      - type: passiveScan-wait
+      - type: report
+        parameters:
+          template: modern
+          reportDir: /zap/wrk/reports
+          reportFile: zap-report
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: zap-scan
+  namespace: flask-app
+spec:
+  template:
+    spec:
+      containers:
+        - name: zap
+          image: ghcr.io/zaproxy/zaproxy:stable
+          command: ["zap.sh", "-cmd", "-autorun", "/zap/wrk/zap-plan.yml"]
+          volumeMounts:
+            - name: zap-plan-volume
+              mountPath: /zap/wrk
+            - name: zap-reports-volume
+              mountPath: /zap/wrk/reports
+      volumes:
+        - name: zap-plan-volume
+          configMap:
+            name: zap-plan
+        - name: zap-reports-volume
+          persistentVolumeClaim:
+            claimName: zap-reports-pvc
+      restartPolicy: Never

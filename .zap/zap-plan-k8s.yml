@@ -1,0 +1,21 @@
+env:
+  contexts:
+    - name: notes-app-context
+      urls:
+        - "http://frontend-svc"
+      includePaths:
+        - "http://frontend-svc/.*"
+  parameters:
+    failOnError: true
+    failOnWarning: false
+jobs:
+  - type: spider
+    parameters:
+      context: notes-app-context
+      maxDuration: 2
+  - type: passiveScan-wait
+  - type: report
+    parameters:
+      template: modern
+      reportDir: /zap/wrk/reports
+      reportFile: zap-report
