@@ -2,18 +2,28 @@ env:
   contexts:
     - name: notes-app-context
       urls:
-        - "http://frontend-svc"
+        - "http://localhost:8080"
       includePaths:
-        - "http://frontend-svc/.*"
+        - "http://localhost:8080/.*"
   parameters:
     failOnError: true
     failOnWarning: false
+
 jobs:
   - type: spider
     parameters:
       context: notes-app-context
       maxDuration: 2
+  - type: spiderAjax
+    parameters:
+      context: notes-app-context
+      maxDuration: 2
   - type: passiveScan-wait
+  - type: activeScan
+    parameters:
+      context: notes-app-context
+      policy: Default Policy
+      maxScanDurationInMins: 5
   - type: report
     parameters:
       template: modern

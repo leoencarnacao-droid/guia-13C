@@ -11,27 +11,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # En el Sprint 3 pide levantar la app. Como estamos en GitHub, 
-      # usamos Docker Compose (igual que en el 13B) para levantarla.
       - name: Levantar la App con Docker Compose
         run: |
-          docker compose up -d
-          # Esperamos a que la app responda
+          docker compose up -d --build
+          echo "Esperando a que la Notes App levante..."
           for i in {1..30}; do
             if curl -s http://localhost:8080 > /dev/null; then
-              echo "¡App lista!"
+              echo "¡App lista para escanear!"
               exit 0
             fi
+            echo "Esperando... ($i/30)"
             sleep 2
           done
           exit 1
 
-      # Sprint 4: Job de Seguridad en GitHub Actions (Comando exacto del TP)
-      - name: ZAP Scan
+      - name: ZAP Scan (Automation Framework)
         run: |
           mkdir -p reports
           chmod -R 777 reports
-          docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap.sh -cmd -autorun /zap/wrk/zap.yaml -P 8090
+          # Usamos -P 8090 para el proxy y el plan que apunta a localhost:8080
+          docker run --rm --network host -v $(pwd)/reports:/zap/wrk/reports:rw -v $(pwd):/zap/wrk/:rw \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/.zap/zap-plan-k8s.yml -P 8090
 
       - name: Subir Reporte de Vulnerabilidades
         if: always()
